@@ -12,7 +12,7 @@ module.exports = async function handler(req, res) {
   if (!nom) return res.status(400).json({ error: 'Nom requis' });
 
   const nomNormalise = nom.trim().toLowerCase();
-  const key = `etudiant:${nomNormalise}`;
+  const key = `git:etudiant:${nomNormalise}`;
 
   try {
     const existant = await kv.get(key);
@@ -22,25 +22,17 @@ module.exports = async function handler(req, res) {
     if (existant && existant.score !== undefined) {
       return res.status(409).json({ error: 'existe' });
     }
-
     const bloque = violations > 0;
     const data = {
-      nom: nom.trim(),
-      nom_normalise: nomNormalise,
-      score,
-      total,
+      nom: nom.trim(), nom_normalise: nomNormalise,
+      score, total,
       pourcentage: Math.round((score / total) * 100),
-      violations: violations || 0,
-      bloque,
+      violations: violations || 0, bloque,
       details: details || [],
       date: new Date().toISOString()
     };
-
     await kv.set(key, data);
-
-    // Ajouter à la liste globale
-    await kv.lpush('resultats', JSON.stringify(data));
-
+    await kv.lpush('git:resultats', JSON.stringify(data));
     return res.status(200).json({ ok: true, bloque });
   } catch (err) {
     console.error(err);
