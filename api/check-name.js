@@ -14,7 +14,7 @@ module.exports = async function handler(req, res) {
   }
 
   const nomNormalise = nom.trim().toLowerCase();
-  const key = `etudiant:${nomNormalise}`;
+  const key = `git:etudiant:${nomNormalise}`;
 
   try {
     const existant = await kv.get(key);
