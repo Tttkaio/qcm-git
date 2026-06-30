@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QCM GIT & GitHub</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #0d1117; color: #e6edf3; min-height: 100vh; }
+
+  /* ÉCRAN ANTI-TRICHE */
+  #cheatScreen {
+    display: none; position: fixed; inset: 0; background: #1a0000;
+    z-index: 9999; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 30px;
+  }
+  #cheatScreen h1 { font-size: 3rem; color: #f85149; margin-bottom: 20px; }
+  #cheatScreen p { font-size: 1.1rem; color: #e6edf3; max-width: 500px; line-height: 1.6; }
+
+  /* ÉCRAN ACCUEIL */
+  #welcomeScreen {
+    max-width: 550px; margin: 60px auto; background: #161b22;
+    border: 1px solid #30363d; border-radius: 16px; padding: 45px; text-align: center;
+  }
+  .logo-git { font-size: 3.5rem; margin-bottom: 15px; }
+  #welcomeScreen h1 { font-size: 1.8rem; font-weight: 700; margin-bottom: 8px; }
+  #welcomeScreen .subtitle { color: #8b949e; margin-bottom: 30px; }
+  #welcomeScreen input {
+    width: 100%; padding: 14px 18px; background: #0d1117; border: 1px solid #30363d;
+    border-radius: 10px; color: #e6edf3; font-size: 1.05rem; margin-bottom: 12px;
+    transition: border-color 0.2s;
+  }
+  #welcomeScreen input:focus { outline: none; border-color: #f05033; }
+  .btn-start {
+    width: 100%; padding: 14px; background: linear-gradient(135deg, #f05033, #e84393);
+    border: none; border-radius: 10px; color: white; font-size: 1.1rem;
+    font-weight: 700; cursor: pointer; transition: opacity 0.2s;
+  }
+  .btn-start:hover { opacity: 0.9; }
+  .rules { background: #0d1117; border: 1px solid #30363d; border-radius: 10px; padding: 18px; margin-top: 20px; text-align: left; }
+  .rules h3 { color: #f85149; margin-bottom: 10px; font-size: 0.95rem; }
+  .rules li { font-size: 0.85rem; color: #8b949e; margin-bottom: 6px; list-style: none; padding-left: 5px; }
+  .rules li::before { content: "⚠️ "; }
+  .error-msg { color: #f85149; font-size: 0.9rem; margin-top: 10px; display: none; }
+
+  /* QCM */
+  #qcmScreen { display: none; max-width: 820px; margin: 0 auto; padding: 25px; }
+  .progress-bar-wrap { background: #21262d; border-radius: 99px; height: 8px; margin-bottom: 8px; }
+  .progress-bar { height: 8px; border-radius: 99px; background: linear-gradient(135deg, #f05033, #e84393); transition: width 0.4s; }
+  .progress-info { display: flex; justify-content: space-between; font-size: 0.82rem; color: #8b949e; margin-bottom: 20px; }
+  .question-card {
+    background: #161b22; border: 1px solid #30363d; border-radius: 14px;
+    padding: 30px; margin-bottom: 20px;
+  }
+  .question-num { font-size: 0.82rem; color: #8b949e; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .question-text { font-size: 1.1rem; font-weight: 600; line-height: 1.6; margin-bottom: 22px; }
+  .option {
+    display: flex; align-items: center; gap: 12px; padding: 13px 18px;
+    border: 1px solid #30363d; border-radius: 10px; margin-bottom: 10px;
+    cursor: pointer; transition: all 0.15s; background: #0d1117;
+  }
+  .option:hover { border-color: #f05033; background: #1a0f0f; }
+  .option.selected { border-color: #f05033; background: #1a0f0f; }
+  .option.correct { border-color: #3fb950; background: #0c2515; }
+  .option.wrong { border-color: #f85149; background: #1a0000; }
+  .option-letter {
+    width: 28px; height: 28px; border-radius: 50%; background: #21262d;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.85rem; flex-shrink: 0; color: #8b949e;
+  }
+  .option.selected .option-letter { background: #f05033; color: white; }
+  .option.correct .option-letter { background: #3fb950; color: white; }
+  .option.wrong .option-letter { background: #f85149; color: white; }
+  .btn-next {
+    display: block; width: 100%; padding: 14px;
+    background: linear-gradient(135deg, #f05033, #e84393);
+    border: none; border-radius: 10px; color: white; font-size: 1rem;
+    font-weight: 700; cursor: pointer; margin-top: 10px;
+  }
+  .btn-next:disabled { opacity: 0.4; cursor: not-allowed; }
+  .explanation { margin-top: 15px; padding: 12px 16px; background: #0d1117; border-left: 3px solid #58a6ff; border-radius: 0 8px 8px 0; font-size: 0.88rem; color: #8b949e; display: none; }
+
+  /* RÉSULTATS */
+  #resultsScreen { display: none; max-width: 620px; margin: 40px auto; text-align: center; padding: 25px; }
+  .result-card { background: #161b22; border: 1px solid #30363d; border-radius: 16px; padding: 40px; }
+  .score-circle {
+    width: 130px; height: 130px; border-radius: 50%;
+    border: 6px solid; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; margin: 0 auto 25px;
+  }
+  .score-circle .score-num { font-size: 2.2rem; font-weight: 800; }
+  .score-circle .score-label { font-size: 0.8rem; color: #8b949e; }
+  .result-msg { font-size: 1.2rem; font-weight: 600; margin-bottom: 8px; }
+  .result-sub { color: #8b949e; font-size: 0.95rem; margin-bottom: 25px; }
+  .cheat-warning { background: #4a1515; border: 1px solid #f85149; border-radius: 10px; padding: 15px; margin-top: 20px; color: #f85149; font-size: 0.9rem; }
+  .violations-bar { display: flex; gap: 6px; justify-content: center; margin-top: 15px; }
+  .vdot { width: 12px; height: 12px; border-radius: 50%; background: #f85149; }
+
+  /* HEADER */
+  .header { background: #161b22; border-bottom: 1px solid #30363d; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; }
+  .header-brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1rem; }
+  .violation-counter { background: #4a1515; border: 1px solid #f85149; border-radius: 6px; padding: 4px 10px; font-size: 0.82rem; color: #f85149; display: none; }
+
+  code { background: #21262d; padding: 1px 6px; border-radius: 4px; font-family: monospace; font-size: 0.92em; color: #79c0ff; }
+</style>
+</head>
+<body>
+
+<!-- BANNIÈRE ANTI-TRICHE -->
+<div id="cheatScreen">
+  <h1>🚫 TRICHE DÉTECTÉE</h1>
+  <p>Vous avez quitté la fenêtre du QCM plusieurs fois.<br><br>
+  Votre session a été <strong>bloquée automatiquement</strong>.<br>
+  Votre résultat a été enregistré avec la mention <strong>"Bloqué"</strong>.<br><br>
+  Contactez votre professeur si vous pensez qu'il s'agit d'une erreur.</p>
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-brand">🐙 QCM GIT & GitHub</div>
+  <div id="violationCounter" class="violation-counter"></div>
+</div>
+
+<!-- ÉCRAN ACCUEIL -->
+<div id="welcomeScreen">
+  <div class="logo-git">🐙</div>
+  <h1>QCM GIT & GitHub</h1>
+  <div class="subtitle">50 questions • Anti-triche activé</div>
+  <input type="text" id="studentName" placeholder="Votre Prénom et Nom" maxlength="60"
+    onkeypress="if(event.key==='Enter')startQuiz()">
+  <button class="btn-start" onclick="startQuiz()">Commencer le QCM →</button>
+  <div id="errorMsg" class="error-msg"></div>
+  <div class="rules">
+    <h3>📋 Règles importantes</h3>
+    <ul>
+      <li>Ne quittez pas cette fenêtre pendant l'examen</li>
+      <li>Ne changez pas d'onglet ou d'application</li>
+      <li>Copier-coller et raccourcis clavier sont désactivés</li>
+      <li>Toute infraction est enregistrée automatiquement</li>
+      <li>En cas de triche détectée : blocage permanent</li>
+    </ul>
+  </div>
+</div>
+
+<!-- QCM -->
+<div id="qcmScreen">
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progressBar" style="width:0%"></div>
+  </div>
+  <div class="progress-info">
+    <span id="progressText">Question 1/50</span>
+    <span id="scoreText">Score : 0/0</span>
+  </div>
+  <div id="questionContainer"></div>
+</div>
+
+<!-- RÉSULTATS -->
+<div id="resultsScreen">
+  <div class="result-card">
+    <div class="score-circle" id="scoreCircle">
+      <div class="score-num" id="scoreNum">-</div>
+      <div class="score-label">/ 50</div>
+    </div>
+    <div class="result-msg" id="resultMsg"></div>
+    <div class="result-sub" id="resultSub"></div>
+    <div id="cheatWarn"></div>
+  </div>
+</div>
+
+<script>
+// ===================== QUESTIONS =====================
+const QUESTIONS_POOL = [
+  // --- SÉANCE 1 : Installation, Configuration, Concepts de base ---
+  {
+    q: "Quelle est la différence principale entre Git et GitHub ?",
+    opts: [
+      "Git est payant, GitHub est gratuit",
+      "Git est un logiciel local de gestion de versions, GitHub est une plateforme en ligne",
+      "GitHub fonctionne sans Git",
+      "Git et GitHub sont identiques"
+    ],
+    correct: 1,
+    exp: "Git est installé localement sur ton ordinateur. GitHub est un service en ligne (hébergeur) qui utilise Git."
+  },
+  {
+    q: "Quelle commande vérifie la version de Git installée ?",
+    opts: ["git --check", "git version", "git --version", "git -v"],
+    correct: 2,
+    exp: "La commande correcte est <code>git --version</code>."
+  },
+  {
+    q: "Quel dossier caché Git crée-t-il dans un projet pour stocker tout l'historique ?",
+    opts: [".github", ".git", ".gitconfig", ".repository"],
+    correct: 1,
+    exp: "Git crée un dossier caché <code>.git</code> qui contient toute la base de données du dépôt."
+  },
+  {
+    q: "Quelle commande initialise un nouveau dépôt Git dans un dossier ?",
+    opts: ["git start", "git create", "git init", "git new"],
+    correct: 2,
+    exp: "<code>git init</code> crée le dossier <code>.git</code> et initialise le dépôt."
+  },
+  {
+    q: "Combien de zones principales Git possède-t-il pour gérer les fichiers ?",
+    opts: ["1", "2", "3", "4"],
+    correct: 2,
+    exp: "Git a 3 zones : Working Directory (espace de travail), Staging Area (index), et Repository (dépôt)."
+  },
+  {
+    q: "Quel est le nom de la zone intermédiaire entre le Working Directory et le Repository ?",
+    opts: ["Buffer Area", "Staging Area (Index)", "Transit Zone", "Cache Area"],
+    correct: 1,
+    exp: "La Staging Area (aussi appelée Index) est la zone de transit où on prépare les fichiers avant de commiter."
+  },
+  {
+    q: "Qu'est-ce qu'un fichier en état « Untracked » dans Git ?",
+    opts: [
+      "Un fichier supprimé du dépôt",
+      "Un fichier modifié depuis le dernier commit",
+      "Un fichier nouveau que Git ne suit pas encore",
+      "Un fichier prêt à être commité"
+    ],
+    correct: 2,
+    exp: "Untracked = fichier que Git n'a jamais suivi. Il faut faire <code>git add</code> pour commencer à le suivre."
+  },
+  {
+    q: "Quelle commande ajoute TOUS les fichiers modifiés à la zone de transit (Staging Area) ?",
+    opts: ["git add all", "git add *", "git add --all", "git add ."],
+    correct: 3,
+    exp: "<code>git add .</code> ajoute tous les fichiers du répertoire courant. <code>git add --all</code> fait pareil."
+  },
+  {
+    q: "Quelle commande crée un commit avec un message descriptif ?",
+    opts: ["git save -m \"message\"", "git commit -m \"message\"", "git push -m \"message\"", "git log -m \"message\""],
+    correct: 1,
+    exp: "<code>git commit -m \"message\"</code> crée un instantané permanent dans l'historique avec ce message."
+  },
+  {
+    q: "Quelle commande affiche l'historique des commits en version condensée (une ligne par commit) ?",
+    opts: ["git log --short", "git log --compact", "git log --oneline", "git history --brief"],
+    correct: 2,
+    exp: "<code>git log --oneline</code> affiche chaque commit sur une ligne avec son hash court et son message."
+  },
+  {
+    q: "Que contient exactement le dossier .git ?",
+    opts: [
+      "Les fichiers sources du projet",
+      "La configuration du système d'exploitation",
+      "Toute la base de données Git avec l'historique",
+      "Les fichiers de configuration de l'éditeur"
+    ],
+    correct: 2,
+    exp: "Le dossier <code>.git</code> contient tous les commits, branches, tags et la configuration du dépôt."
+  },
+  {
+    q: "La commande <code>git config --global user.name \"Nom\"</code> permet de :",
+    opts: [
+      "Créer un compte GitHub",
+      "Configurer le nom qui apparaîtra dans tous tes commits",
+      "Renommer le dépôt Git",
+      "Changer le nom de la branche principale"
+    ],
+    correct: 1,
+    exp: "Cette commande définit l'identité de l'auteur des commits. Sans ça, Git refuse de commiter."
+  },
+  {
+    q: "Que signifie l'option <code>--global</code> dans <code>git config --global</code> ?",
+    opts: [
+      "La configuration s'applique uniquement au projet actuel",
+      "La configuration s'applique à tous les projets sur cet ordinateur",
+      "La configuration est synchronisée avec GitHub",
+      "La configuration est temporaire pour cette session"
+    ],
+    correct: 1,
+    exp: "--global écrit dans ~/.gitconfig, donc la config s'applique à tous tes projets Git sur cette machine."
+  },
+  {
+    q: "Quelle commande permet de voir l'état des fichiers dans un dépôt Git ?",
+    opts: ["git check", "git state", "git status", "git info"],
+    correct: 2,
+    exp: "<code>git status</code> montre quels fichiers sont modifiés, staged, ou non suivis."
+  },
+  {
+    q: "Un fichier à l'état « Staged » signifie qu'il est :",
+    opts: [
+      "Supprimé de Git",
+      "Modifié mais pas encore ajouté",
+      "Dans la zone de transit, prêt à être inclus dans le prochain commit",
+      "Déjà sauvegardé dans l'historique final"
+    ],
+    correct: 2,
+    exp: "Staged = le fichier a été ajouté avec <code>git add</code> et sera inclus dans le prochain <code>git commit</code>."
+  },
+  // --- SÉANCE 2 : Branches, Merge, GitHub ---
+  {
+    q: "Qu'est-ce qu'une branche Git ?",
+    opts: [
+      "Un dépôt Git séparé sur GitHub",
+      "Une copie indépendante du projet où travailler sans affecter la branche principale",
+      "Un type de commit spécial",
+      "Un fichier de configuration de Git"
+    ],
+    correct: 1,
+    exp: "Une branche est un pointeur léger sur un commit. Elle permet de travailler en isolation sans toucher main."
+  },
+  {
+    q: "Quelle commande crée ET bascule sur une nouvelle branche en une seule étape ?",
+    opts: ["git branch -new feature", "git switch --create feature", "git checkout -b feature", "git create -b feature"],
+    correct: 2,
+    exp: "<code>git checkout -b feature</code> crée la branche ET bascule dessus immédiatement."
+  },
+  {
+    q: "Quelle commande liste toutes les branches locales (avec * sur la branche active) ?",
+    opts: ["git branches", "git branch", "git list", "git show branches"],
+    correct: 1,
+    exp: "<code>git branch</code> sans argument liste toutes les branches locales et marque l'actuelle avec *."
+  },
+  {
+    q: "Pour fusionner une branche \"feature\" dans \"main\", quelle est la bonne séquence ?",
+    opts: [
+      "git checkout feature → git merge main",
+      "git checkout main → git merge feature",
+      "git merge main feature",
+      "git push feature main"
+    ],
+    correct: 1,
+    exp: "Il faut d'abord SE PLACER sur la branche cible (main), puis fusionner la branche source (feature)."
+  },
+  {
+    q: "Qu'est-ce qu'un conflit de merge ?",
+    opts: [
+      "Une erreur lors d'un push vers GitHub",
+      "Deux branches qui ont modifié la même ligne du même fichier",
+      "Un commit créé sans message",
+      "Une branche qui n'a aucun commit"
+    ],
+    correct: 1,
+    exp: "Un conflit survient quand deux branches ont modifié le même endroit dans un fichier. Git ne sait pas laquelle garder."
+  },
+  {
+    q: "Quels marqueurs Git insère-t-il dans un fichier lors d'un conflit de merge ?",
+    opts: [
+      "[[[ HEAD ]]] et [[[ branch ]]]",
+      "<<< HEAD >>> et <<< branch >>>",
+      "<<<<<<< HEAD, =======, et >>>>>>> branch",
+      "--- HEAD --- et --- branch ---"
+    ],
+    correct: 2,
+    exp: "Git insère <code><<<<<<< HEAD</code>, <code>=======</code>, et <code>>>>>>>> branche</code> pour délimiter chaque version."
+  },
+  {
+    q: "Quelle commande supprime une branche locale après qu'elle a été fusionnée ?",
+    opts: ["git branch --remove nom", "git delete branch nom", "git branch -d nom", "git rm branch nom"],
+    correct: 2,
+    exp: "<code>git branch -d nom</code> supprime la branche (-d vérifie qu'elle est fusionnée. -D force la suppression)."
+  },
+  {
+    q: "Quelle commande connecte un dépôt local Git à un dépôt GitHub ?",
+    opts: ["git connect origin URL", "git remote add origin URL", "git link URL", "git push URL"],
+    correct: 1,
+    exp: "<code>git remote add origin URL</code> ajoute un remote nommé 'origin' pointant vers l'URL GitHub."
+  },
+  {
+    q: "Quelle commande envoie le code local sur GitHub et configure le tracking pour la première fois ?",
+    opts: [
+      "git upload -u origin main",
+      "git push --first origin main",
+      "git push -u origin main",
+      "git send origin main"
+    ],
+    correct: 2,
+    exp: "<code>git push -u origin main</code> — le -u configure le tracking : les prochains push/pull n'auront plus besoin de préciser origin main."
+  },
+  {
+    q: "Quelle commande récupère les dernières modifications depuis GitHub ET les fusionne localement ?",
+    opts: ["git fetch --all", "git download", "git pull", "git sync"],
+    correct: 2,
+    exp: "<code>git pull</code> = <code>git fetch</code> + <code>git merge</code>. Il récupère ET fusionne les changements distants."
+  },
+  {
+    q: "Quelle commande télécharge un dépôt GitHub complet sur ton ordinateur pour la première fois ?",
+    opts: ["git download URL", "git clone URL", "git pull URL", "git fetch URL"],
+    correct: 1,
+    exp: "<code>git clone URL</code> crée une copie locale complète du dépôt, avec tout l'historique."
+  },
+  {
+    q: "Depuis 2021, GitHub n'accepte plus les mots de passe pour git push. Quelle méthode faut-il utiliser ?",
+    opts: [
+      "Empreinte digitale",
+      "Clé SSH uniquement",
+      "Personal Access Token (PAT)",
+      "Code PIN à 4 chiffres"
+    ],
+    correct: 2,
+    exp: "GitHub a remplacé les mots de passe par les Personal Access Tokens (PAT) ou les clés SSH."
+  },
+  {
+    q: "Quelle est la différence entre <code>git clone</code> et <code>git pull</code> ?",
+    opts: [
+      "Aucune différence, ce sont des synonymes",
+      "<code>git clone</code> télécharge un dépôt pour la première fois, <code>git pull</code> met à jour un dépôt existant",
+      "<code>git pull</code> télécharge un nouveau dépôt, <code>git clone</code> met à jour",
+      "<code>git clone</code> ne fonctionne que sur GitHub"
+    ],
+    correct: 1,
+    exp: "clone = première fois (pas encore de dépôt local). pull = tu as déjà cloné et tu veux les nouvelles modifications."
+  },
+  {
+    q: "Quelle commande affiche les remotes configurés sur un projet ?",
+    opts: ["git remote --show", "git remote -v", "git origin --list", "git check remote"],
+    correct: 1,
+    exp: "<code>git remote -v</code> liste tous les remotes avec leurs URLs (fetch et push)."
+  },
+  {
+    q: "Que se passe-t-il quand on revient sur \"main\" après avoir travaillé sur une branche \"feature\" ?",
+    opts: [
+      "Les modifications de feature sont perdues définitivement",
+      "Les modifications de feature s'ajoutent à main automatiquement",
+      "Les modifications de feature disparaissent temporairement (elles restent sur la branche feature)",
+      "Git génère une erreur de synchronisation"
+    ],
+    correct: 2,
+    exp: "Chaque branche a ses propres commits. En revenant sur main, les fichiers reviennent à l'état de main. Les modifs de feature sont sur la branche feature, pas perdues."
+  },
+  // --- SÉANCE 3 : .gitignore, Annuler, Équipe ---
+  {
+    q: "À quoi sert le fichier <code>.gitignore</code> ?",
+    opts: [
+      "À ignorer les erreurs de Git",
+      "À lister les fichiers et dossiers que Git doit ignorer complètement",
+      "À accélérer les opérations Git",
+      "À configurer la connexion GitHub"
+    ],
+    correct: 1,
+    exp: ".gitignore contient les patterns des fichiers/dossiers que Git ne doit pas versionner (node_modules, .env, etc.)."
+  },
+  {
+    q: "Quel type de fichier ne doit JAMAIS être versionné dans un dépôt Git ?",
+    opts: [
+      "Les fichiers README.md",
+      "Les fichiers HTML et CSS",
+      "Les fichiers .env contenant des mots de passe et clés API",
+      "Les fichiers de configuration du projet"
+    ],
+    correct: 2,
+    exp: "Les secrets (mots de passe, tokens API) dans un .env ne doivent JAMAIS être commités. Ils seraient exposés à tous."
+  },
+  {
+    q: "Pourquoi ignore-t-on généralement le dossier <code>node_modules/</code> dans .gitignore ?",
+    opts: [
+      "Il contient des fichiers potentiellement dangereux",
+      "Il est très volumineux et peut être regénéré avec npm install",
+      "Git ne peut pas lire les dossiers node_modules",
+      "Il appartient à GitHub et non au projet"
+    ],
+    correct: 1,
+    exp: "node_modules peut peser des centaines de Mo. Il suffit de commiter package.json et chaque dev fait <code>npm install</code>."
+  },
+  {
+    q: "Quelle commande annule les modifications d'un fichier non encore stagé (Git 2.23+) ?",
+    opts: [
+      "git undo fichier",
+      "git cancel fichier",
+      "git restore fichier",
+      "git rollback fichier"
+    ],
+    correct: 2,
+    exp: "<code>git restore fichier</code> remet le fichier à son état du dernier commit (modifications perdues !)."
+  },
+  {
+    q: "Quelle commande retire un fichier de la zone de transit (unstage) sans perdre les modifications ?",
+    opts: [
+      "git unstage fichier",
+      "git restore --staged fichier",
+      "git remove --staged fichier",
+      "git reset --hard fichier"
+    ],
+    correct: 1,
+    exp: "<code>git restore --staged fichier</code> enlève le fichier de la Staging Area mais garde les modifications dans le Working Directory."
+  },
+  {
+    q: "Quelle commande permet de modifier le message du DERNIER commit (pas encore pushé) ?",
+    opts: [
+      "git commit --fix -m \"nouveau message\"",
+      "git commit --amend -m \"nouveau message\"",
+      "git log --edit -m \"nouveau message\"",
+      "git push --amend"
+    ],
+    correct: 1,
+    exp: "<code>git commit --amend</code> modifie le dernier commit. ATTENTION : ne jamais amender un commit déjà pushé !"
+  },
+  {
+    q: "Pourquoi ne faut-il JAMAIS utiliser <code>git commit --amend</code> sur un commit déjà pushé sur GitHub ?",
+    opts: [
+      "GitHub ne supporte pas cette commande",
+      "Cela utilise trop d'espace disque",
+      "Cela réécrit l'historique et crée des conflits pour les autres développeurs",
+      "Cela supprime le commit définitivement de GitHub"
+    ],
+    correct: 2,
+    exp: "--amend réécrit l'historique (change le hash du commit). Si d'autres ont déjà pull ce commit, leur historique diverge."
+  },
+  {
+    q: "Quelle est la différence fondamentale entre <code>git revert</code> et <code>git reset</code> ?",
+    opts: [
+      "git revert est plus rapide que git reset",
+      "git revert crée un nouveau commit inverse (sûr en équipe), git reset efface des commits (dangereux si pushé)",
+      "git reset est plus sûr en équipe que git revert",
+      "Ils font exactement la même chose avec une syntaxe différente"
+    ],
+    correct: 1,
+    exp: "revert = ajoute un commit qui annule. reset = efface des commits. En équipe, toujours préférer revert pour ne pas réécrire l'historique partagé."
+  },
+  {
+    q: "À quoi sert la commande <code>git stash</code> ?",
+    opts: [
+      "À supprimer tous les fichiers non trackés",
+      "À mettre temporairement de côté des modifications en cours sans commiter",
+      "À créer une nouvelle branche de sauvegarde",
+      "À synchroniser les modifications avec GitHub"
+    ],
+    correct: 1,
+    exp: "git stash met tes modifications non commitées dans une pile temporaire, pour que tu puisses changer de branche proprement."
+  },
+  {
+    q: "Quelle commande récupère et applique les modifications mises de côté avec <code>git stash</code> ?",
+    opts: ["git stash get", "git stash restore", "git stash pop", "git stash apply --all"],
+    correct: 2,
+    exp: "<code>git stash pop</code> récupère les modifications et les supprime de la pile de stash."
+  },
+  {
+    q: "Dans le workflow Git Flow, quelle branche contient le code en production (toujours stable) ?",
+    opts: ["develop", "feature", "main", "hotfix"],
+    correct: 2,
+    exp: "La branche <code>main</code> (ou master) contient le code de production, toujours stable et testé."
+  },
+  {
+    q: "Dans le workflow Git Flow, à quoi sert la branche <code>develop</code> ?",
+    opts: [
+      "Au code en production directement",
+      "À l'intégration continue des nouvelles fonctionnalités (merge des branches feature)",
+      "Aux corrections urgentes en production (hotfix)",
+      "À l'archivage des anciennes versions"
+    ],
+    correct: 1,
+    exp: "develop est la branche d'intégration. Les features y sont mergées et testées avant de partir en main."
+  },
+  {
+    q: "Qu'est-ce qu'une Pull Request (PR) sur GitHub ?",
+    opts: [
+      "Une commande Git pour récupérer du code distant",
+      "Une demande de fusion : on propose des changements que les collègues relisent avant d'accepter",
+      "Un type de branche spéciale sur GitHub",
+      "Un message automatique envoyé par GitHub lors d'un push"
+    ],
+    correct: 1,
+    exp: "Une PR = une proposition de fusion avec revue de code. Les collègues commentent, approuvent ou demandent des modifications avant le merge."
+  },
+  {
+    q: "Quelle commande affiche les différences des fichiers modifiés mais pas encore stagés ?",
+    opts: ["git show", "git changes", "git diff", "git compare"],
+    correct: 2,
+    exp: "<code>git diff</code> sans argument montre les modifications non stagées. <code>git diff --staged</code> montre les modifications stagées."
+  },
+  {
+    q: "Quelle commande compare les différences entre deux branches ?",
+    opts: [
+      "git compare main feature",
+      "git diff main feature",
+      "git branch --diff main feature",
+      "git check main feature"
+    ],
+    correct: 1,
+    exp: "<code>git diff main feature</code> montre toutes les différences entre la branche main et la branche feature."
+  },
+  // --- QUESTIONS PIÈGES / AVANCÉES ---
+  {
+    q: "Tu as commité un fichier secret.txt AVANT de l'ajouter au .gitignore. Que se passe-t-il maintenant ?",
+    opts: [
+      "Git l'ignore automatiquement grâce au .gitignore",
+      "Git continue à suivre ce fichier malgré le .gitignore",
+      "Git le supprime automatiquement du disque dur",
+      "Git génère une erreur au prochain commit"
+    ],
+    correct: 1,
+    exp: "PIÈGE ! .gitignore n'ignore que les fichiers jamais trackés. Si le fichier est déjà dans l'historique, il faut faire <code>git rm --cached fichier</code> pour arrêter de le suivre."
+  },
+  {
+    q: "Après <code>git add .</code> et <code>git commit -m \"msg\"</code>, que retourne <code>git status</code> ?",
+    opts: [
+      "\"Changes to be committed\"",
+      "\"Untracked files detected\"",
+      "\"nothing to commit, working tree clean\"",
+      "\"Modified files not staged\""
+    ],
+    correct: 2,
+    exp: "Après un commit propre avec tous les fichiers stagés, git status indique que tout est propre : \"nothing to commit, working tree clean\"."
+  },
+  {
+    q: "Quelle est la bonne pratique pour un message de commit ?",
+    opts: [
+      "\"modif\" ou \"update\" (court et rapide)",
+      "\"Correction du bug de calcul de prix sur la page panier\" (QUOI et POURQUOI)",
+      "Laisser le message vide pour aller plus vite",
+      "Utiliser uniquement la date : \"2024-01-15\""
+    ],
+    correct: 1,
+    exp: "Un bon message de commit explique QUE FAIT ce commit et POURQUOI. Des messages vagues comme 'fix' ou 'update' sont inutiles 6 mois plus tard."
+  },
+  {
+    q: "Dans un workflow en équipe, quelle est la première commande à taper le matin avant de commencer ?",
+    opts: [
+      "git push",
+      "git commit -m \"début de journée\"",
+      "git pull",
+      "git branch --list"
+    ],
+    correct: 2,
+    exp: "<code>git pull</code> chaque matin pour récupérer le travail de tes collègues. Travailler sur une base obsolète crée des conflits."
+  },
+  {
+    q: "Tu travailles sur une feature et ton chef te demande de corriger un bug urgent sur main. Que fais-tu ?",
+    opts: [
+      "Tu commites ton travail inachevé sur main",
+      "Tu supprimes tes modifications en cours",
+      "Tu utilises <code>git stash</code>, corriges le bug, puis <code>git stash pop</code>",
+      "Tu crées un dossier copie de sauvegarde"
+    ],
+    correct: 2,
+    exp: "Workflow classique : <code>git stash</code> → changer de branche → corriger → commit → revenir → <code>git stash pop</code>."
+  },
+  {
+    q: "Quelle commande configure l'email affiché dans tes commits ?",
+    opts: [
+      "git config --global user.mail \"email@exemple.com\"",
+      "git config --global email \"email@exemple.com\"",
+      "git config --global user.email \"email@exemple.com\"",
+      "git email --set \"email@exemple.com\""
+    ],
+    correct: 2,
+    exp: "<code>git config --global user.email \"email\"</code> — à faire lors de la première configuration de Git."
+  },
+  {
+    q: "Quelle commande permet de voir le contenu d'un commit spécifique (avec son hash) ?",
+    opts: [
+      "git view abc1234",
+      "git open abc1234",
+      "git show abc1234",
+      "git display abc1234"
+    ],
+    correct: 2,
+    exp: "<code>git show hash</code> affiche les détails et les modifications d'un commit précis."
+  },
+  {
+    q: "Quelle commande affiche un graphique des branches dans le terminal ?",
+    opts: [
+      "git log --graph --oneline --all",
+      "git branch --graph --all",
+      "git tree --all",
+      "git display --graph"
+    ],
+    correct: 0,
+    exp: "<code>git log --graph --oneline --all</code> affiche un graphe ASCII de toutes les branches et leurs commits."
+  },
+  {
+    q: "Qu'est-ce qu'un « hotfix » dans le workflow Git Flow ?",
+    opts: [
+      "Un commit de nettoyage de code",
+      "Une branche créée depuis main pour corriger un bug critique en production",
+      "Une mise à jour planifiée de fonctionnalité",
+      "Un tag de version"
+    ],
+    correct: 1,
+    exp: "Hotfix = branche créée depuis main pour corriger un bug urgent en prod. Après correction, elle est mergée dans main ET develop."
+  },
+  {
+    q: "Pourquoi est-il important d'ajouter les fichiers de configuration d'IDE (comme .vscode/) au .gitignore ?",
+    opts: [
+      "Ces fichiers sont trop volumineux",
+      "Ces fichiers sont spécifiques à chaque développeur et ne concernent pas le projet",
+      "Git ne peut pas lire ces fichiers",
+      "Ces fichiers contiennent des virus"
+    ],
+    correct: 1,
+    exp: "Les configs d'IDE sont personnelles à chaque dev. Les commiter polluerait le dépôt et créerait des conflits inutiles."
+  },
+  {
+    q: "Quelle commande crée un tag versionné sur le commit actuel ?",
+    opts: [
+      "git label v1.0",
+      "git mark v1.0",
+      "git tag v1.0",
+      "git version v1.0"
+    ],
+    correct: 2,
+    exp: "<code>git tag v1.0</code> crée un tag léger. <code>git tag -a v1.0 -m \"message\"</code> crée un tag annoté (recommandé)."
+  }
+];
+
+// ===================== ÉTAT =====================
+let questions = [];
+let currentIdx = 0;
+let score = 0;
+let answered = 0;
+let violations = 0;
+let studentName = '';
+let examFinished = false;
+let banSent = false;
+const MAX_VIOLATIONS = 3;
+
+// ===================== ANTI-TRICHE =====================
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function recordViolation(reason) {
+  if (examFinished) return;
+  violations++;
+  document.getElementById('violationCounter').style.display = 'block';
+  document.getElementById('violationCounter').textContent = `⚠️ Infractions : ${violations}/${MAX_VIOLATIONS}`;
+  if (violations >= MAX_VIOLATIONS) {
+    triggerBan();
+  }
+}
+
+function triggerBan() {
+  if (banSent) return;
+  banSent = true;
+  examFinished = true;
+  document.getElementById('cheatScreen').style.display = 'flex';
+  // Sauvegarder avec bloqué
+  fetch('/api/save-result', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      nom: studentName,
+      score: score,
+      total: 50,
+      violations: violations,
+      details: []
+    })
+  }).catch(() => {});
+}
+
+// Événements anti-triche
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden && !examFinished && currentIdx >= 0 && studentName) {
+    recordViolation('visibilitychange');
+  }
+});
+
+window.addEventListener('blur', () => {
+  if (!examFinished && studentName && currentIdx >= 0) {
+    recordViolation('blur');
+  }
+});
+
+document.addEventListener('mouseleave', (e) => {
+  if (e.clientY < 0 && !examFinished && studentName && currentIdx >= 0) {
+    recordViolation('mouseleave');
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  // Bloquer F12, Ctrl+C, Ctrl+V, Ctrl+U, Ctrl+S, Ctrl+A, Alt+Tab, etc.
+  if (e.key === 'F12' || e.keyCode === 123) { e.preventDefault(); return false; }
+  if (e.ctrlKey && ['c','v','u','s','a','p'].includes(e.key.toLowerCase())) {
+    e.preventDefault(); return false;
+  }
+  if (e.metaKey && ['c','v','u','s','a','p'].includes(e.key.toLowerCase())) {
+    e.preventDefault(); return false;
+  }
+});
+
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('copy', e => e.preventDefault());
+document.addEventListener('paste', e => e.preventDefault());
+document.addEventListener('cut', e => e.preventDefault());
+
+// ===================== DÉMARRAGE =====================
+async function startQuiz() {
+  const nameInput = document.getElementById('studentName').value.trim();
+  const errDiv = document.getElementById('errorMsg');
+  errDiv.style.display = 'none';
+
+  if (!nameInput || nameInput.length < 3) {
+    errDiv.textContent = 'Veuillez entrer votre prénom et nom (min. 3 caractères).';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  try {
+    const res = await fetch('/api/check-name', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ nom: nameInput })
+    });
+    const data = await res.json();
+
+    if (res.status === 403 && data.error === 'bloque') {
+      errDiv.textContent = '🚫 Vous avez été bloqué pour tentative de triche. Contactez votre professeur.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (res.status === 409 && data.error === 'existe') {
+      errDiv.textContent = '⚠️ Ce nom a déjà passé le QCM. Contactez votre professeur.';
+      errDiv.style.display = 'block';
+      return;
+    }
+    if (!res.ok) {
+      errDiv.textContent = 'Erreur serveur. Réessayez.';
+      errDiv.style.display = 'block';
+      return;
+    }
+  } catch {
+    errDiv.textContent = 'Impossible de contacter le serveur. Vérifiez votre connexion.';
+    errDiv.style.display = 'block';
+    return;
+  }
+
+  studentName = nameInput;
+
+  // Mélanger les questions et en sélectionner 50
+  questions = shuffleArray(QUESTIONS_POOL).slice(0, 50);
+  // Mélanger les options de chaque question
+  questions = questions.map(q => {
+    const opts = q.opts.map((o, i) => ({ text: o, isCorrect: i === q.correct }));
+    const shuffled = shuffleArray(opts);
+    return { ...q, displayOpts: shuffled, correctDisplayIdx: shuffled.findIndex(o => o.isCorrect) };
+  });
+
+  document.getElementById('welcomeScreen').style.display = 'none';
+  document.getElementById('qcmScreen').style.display = 'block';
+  currentIdx = 0;
+  score = 0;
+  answered = 0;
+  renderQuestion();
+}
+
+// ===================== AFFICHAGE QUESTION =====================
+function renderQuestion() {
+  const q = questions[currentIdx];
+  const pct = ((currentIdx) / 50) * 100;
+  document.getElementById('progressBar').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `Question ${currentIdx + 1}/50`;
+  document.getElementById('scoreText').textContent = `Score : ${score}/${answered}`;
+
+  const html = `
+    <div class="question-card">
+      <div class="question-num">Question ${currentIdx + 1} / 50</div>
+      <div class="question-text">${q.q}</div>
+      <div id="optionsDiv">
+        ${q.displayOpts.map((opt, i) => `
+          <div class="option" id="opt_${i}" onclick="selectOption(${i})">
+            <div class="option-letter">${String.fromCharCode(65+i)}</div>
+            <div>${opt.text}</div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="explanation" id="explanation">${q.exp || ''}</div>
+    </div>
+    <button class="btn-next" id="btnNext" disabled onclick="nextQuestion()">
+      ${currentIdx === 49 ? 'Terminer le QCM ✓' : 'Question suivante →'}
+    </button>
+  `;
+  document.getElementById('questionContainer').innerHTML = html;
+}
+
+function selectOption(idx) {
+  const q = questions[currentIdx];
+  const opts = document.querySelectorAll('.option');
+  opts.forEach(o => o.classList.remove('selected'));
+
+  // Si déjà répondu, ne pas permettre de changer
+  const btnNext = document.getElementById('btnNext');
+  if (!btnNext.disabled) return;
+
+  document.getElementById(`opt_${idx}`).classList.add('selected');
+  document.getElementById(`opt_${idx}`).classList.add(idx === q.correctDisplayIdx ? 'correct' : 'wrong');
+
+  // Montrer la bonne réponse si mauvais
+  if (idx !== q.correctDisplayIdx) {
+    document.getElementById(`opt_${q.correctDisplayIdx}`).classList.add('correct');
+  }
+
+  opts.forEach(o => o.onclick = null); // désactiver les autres clics
+
+  if (idx === q.correctDisplayIdx) score++;
+  answered++;
+
+  // Afficher l'explication
+  const expDiv = document.getElementById('explanation');
+  if (expDiv && q.exp) expDiv.style.display = 'block';
+
+  btnNext.disabled = false;
+  document.getElementById('progressBar').style.width = (((currentIdx + 1) / 50) * 100) + '%';
+  document.getElementById('scoreText').textContent = `Score : ${score}/${answered}`;
+}
+
+function nextQuestion() {
+  currentIdx++;
+  if (currentIdx >= 50) {
+    finishQuiz();
+  } else {
+    renderQuestion();
+  }
+}
+
+// ===================== FIN DE QCM =====================
+async function finishQuiz() {
+  examFinished = true;
+  document.getElementById('qcmScreen').style.display = 'none';
+  document.getElementById('resultsScreen').style.display = 'block';
+
+  const pct = Math.round((score / 50) * 100);
+  const circle = document.getElementById('scoreCircle');
+  circle.style.borderColor = pct >= 70 ? '#3fb950' : pct >= 50 ? '#e3b341' : '#f85149';
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreNum').style.color = pct >= 70 ? '#3fb950' : pct >= 50 ? '#e3b341' : '#f85149';
+
+  let msg = '', sub = '';
+  if (pct >= 80) { msg = '🏆 Excellent !'; sub = 'Parfaite maîtrise de GIT & GitHub !'; }
+  else if (pct >= 70) { msg = '✅ Très bien !'; sub = 'Bonne maîtrise des concepts Git.'; }
+  else if (pct >= 50) { msg = '📘 Passable'; sub = 'Des lacunes à combler. Révisez les séances.'; }
+  else { msg = '❌ Insuffisant'; sub = 'Résultat insuffisant. Révisez le cours complet.'; }
+
+  document.getElementById('resultMsg').textContent = msg;
+  document.getElementById('resultSub').textContent = `${pct}% — ${score}/50 bonnes réponses. ${sub}`;
+
+  if (violations > 0) {
+    document.getElementById('cheatWarn').innerHTML = `
+      <div class="cheat-warning">
+        ⚠️ ${violations} infraction(s) de triche détectée(s). Votre résultat a été marqué.
+      </div>`;
+  }
+
+  // Sauvegarder
+  try {
+    await fetch('/api/save-result', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        nom: studentName,
+        score,
+        total: 50,
+        violations,
+        details: []
+      })
+    });
+  } catch {}
+}
+</script>
+</body>
+</html>
