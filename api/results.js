@@ -13,13 +13,12 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const items = await kv.lrange('resultats', 0, -1);
+    const items = await kv.lrange('git:resultats', 0, -1);
     const resultats = items.map(item => {
       try { return typeof item === 'string' ? JSON.parse(item) : item; }
       catch { return null; }
     }).filter(Boolean);
 
-    // Tri par date décroissante
     resultats.sort((a, b) => new Date(b.date) - new Date(a.date));
 
     return res.status(200).json({ resultats });
