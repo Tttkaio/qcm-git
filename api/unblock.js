@@ -17,27 +17,24 @@ module.exports = async function handler(req, res) {
   if (!nom) return res.status(400).json({ error: 'Nom requis' });
 
   const nomNormalise = nom.trim().toLowerCase();
-  const key = `etudiant:${nomNormalise}`;
+  const key = `git:etudiant:${nomNormalise}`;
 
   try {
     const existant = await kv.get(key);
     if (!existant) return res.status(404).json({ error: 'Étudiant introuvable' });
 
-    // Supprimer l'entrée pour permettre un nouveau passage
     await kv.del(key);
 
-    // Mettre à jour dans la liste globale
-    const items = await kv.lrange('resultats', 0, -1);
-    await kv.del('resultats');
+    const items = await kv.lrange('git:resultats', 0, -1);
+    await kv.del('git:resultats');
     for (const item of items) {
       try {
         const obj = typeof item === 'string' ? JSON.parse(item) : item;
         if (obj.nom_normalise !== nomNormalise) {
-          await kv.lpush('resultats', JSON.stringify(obj));
+          await kv.lpush('git:resultats', JSON.stringify(obj));
         }
       } catch {}
     }
-
     return res.status(200).json({ ok: true, message: `${nom} a été débloqué et peut repasser le QCM.` });
   } catch (err) {
     console.error(err);
